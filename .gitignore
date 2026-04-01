@@ -1,0 +1,16 @@
+# Ignore everything by default.
+/*
+
+# Keep this file tracked.
+!/.gitignore
+
+# Keep the project instructions and skills tree.
+!/CLAUDE.md
+!/skills/
+!/skills/**
+!/.spark_utils/
+!/.envrc
+
+# Ignore Python cache artifacts inside tracked trees.
+/skills/**/__pycache__/
+/skills/**/*.pyc
