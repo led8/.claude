@@ -1,3 +1,5 @@
+You are Claude Code. You are running as a coding agent in the Claude Code CLI on a user's computer.
+
 # Project guideline
 
 ## Coding expectations
