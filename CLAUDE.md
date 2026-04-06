@@ -125,12 +125,9 @@ Guidelines:
 
 Use the [voidm-memory](skills/voidm-memory/) skill when working in an existing repository and when continuity across sessions matters.
 
-Use `voidm` to recall and store only durable, reusable knowledge such as:
-- architectural constraints
-- technical decisions and rationale
-- reusable debugging or deployment procedures
-- durable user workflow preferences
-- lessons that are likely to matter again in this repository
+`voidm` has two storage lanes:
+- `voidm add` — durable repo knowledge: architecture, constraints, decisions, procedures, preferences
+- `voidm learn` — reusable tactics backed by a real agent run (strategy, recovery, optimization)
 
 **Do not use `voidm` as a replacement for `.spark_utils/backlog/`.**
 
@@ -138,12 +135,13 @@ Keep:
 - active plans, validated execution steps, and short-term task tracking in `.spark_utils/backlog/`
 - durable long-term project knowledge in `voidm`
 
-Recommended usage cadence (to avoid memory noise and DB overload):
-- run recall at the start of non-trivial work or when continuity is needed
-- for trivial edits, use compact recall or skip recall when clearly unnecessary
-- do not store memory for every step; extract only at meaningful milestones
-- prefer search + link/update over adding near-duplicate memories
-- keep writes sparse by default (typically 0-3 durable memories per substantial task)
+Recommended usage cadence:
+- run `voidm recall --scope my-repo` at the start of non-trivial work or when continuity is needed
+- for trivial edits, skip recall
+- for task-specific searches, start **unscoped** — `--scope` is a hard filter that silently excludes tips and cross-repo knowledge; add it only to reduce noise
+- do not store at every step; extract only at meaningful milestones
+- prefer search + `voidm update` over adding near-duplicate memories
+- keep writes sparse (typically 0–3 memories and 0–2 tips per substantial task)
 
 ## Documentation expectations
 

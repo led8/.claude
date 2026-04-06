@@ -33,12 +33,20 @@ eval "$(voidm scope detect --export)" # sets VOIDM_SCOPE=my-repo
 
 Do not create subscopes (branches, tickets, dates). One scope per repo root.
 
+`--scope` is a **hard filter** — it excludes everything not tagged with that scope, including learning tips (often unscoped), cross-repo patterns, and generic knowledge. Use it deliberately, not as a default.
+
+| Intent | Use `--scope`? |
+|---|---|
+| Startup context (what do I know about *this repo*?) | Yes — `voidm recall --scope my-repo` |
+| Task-specific search (how do I solve *this problem*?) | No — start unscoped |
+| Results too noisy from other projects | Yes — add `--scope` to narrow |
+
 ## Agent Mode
 
 ```bash
 export VOIDM_AGENT_MODE=1   # set once per session
 voidm recall --scope my-repo --agent
-voidm search "auth" --scope my-repo --agent --json
+voidm search "auth" --agent --json
 ```
 
 `--agent` produces compact token-minimal JSON. Combine with `--json` for maximum compatibility.
@@ -54,14 +62,14 @@ voidm recall --scope my-repo           # 5-category structured digest
 voidm recall --scope my-repo --also "auth" --also "redis"  # + task terms
 ```
 
-Then 1–3 task-specific searches:
+Then 1–3 task-specific searches — **start unscoped**:
 
 ```bash
-voidm search "deployment order" --scope my-repo --json
+voidm search "deployment order" --json
 voidm search "auth" --intent "oauth2" --include-neighbors --json
 ```
 
-Widen when scoped results are thin — drop `--scope` or add `--intent`.
+Unscoped searches find learning tips, cross-repo patterns, and generic knowledge that `--scope` would silently exclude. Add `--scope my-repo` only if results are noisy from other projects.
 
 **Run recall before:** entering a repo, planning a feature, debugging non-trivial issues, touching auth/storage/migrations/CI/deployment.
 
@@ -118,8 +126,8 @@ Rewrite events into lessons before storing:
 
 ### Search-Before-Add Protocol
 
-1. Search narrow (`voidm search "hydration bug" --scope my-repo`)
-2. Search broad (`voidm search "context initialization rendering" --scope my-repo`)
+1. Search narrow, unscoped: `voidm search "hydration bug"`
+2. Search broad, unscoped: `voidm search "context initialization rendering"`
 3. If covered → do not add. Extend with `voidm update <id>` if close.
 4. Add only when meaningfully distinct.
 
@@ -220,9 +228,9 @@ The `trigger` and `application_context` control when a tip fires — get them wr
 
 ### Search-Before-Learn Protocol
 
-1. `voidm learn search "<trigger keywords>" --scope my-repo`
+1. `voidm learn search "<trigger keywords>"` — unscoped first
 2. `voidm learn search "<keywords>" --category recovery --json`
-3. Widen if thin: drop `--scope`
+3. Add `--scope my-repo` only if results are noisy from other projects
 4. If covered → do not add. If close → add with distinct trigger, then consolidate.
 
 ### Tip Duplicate Handling and Consolidation
@@ -257,8 +265,9 @@ voidm stale --scope my-repo --older-than 60 --json
 
 ```bash
 voidm scope detect
-voidm recall --scope my-repo --agent
-voidm search "specific topic" --scope my-repo --json
+voidm recall --scope my-repo --agent      # scoped — you want this repo's context
+voidm search "specific topic" --json      # unscoped — cast wide for task knowledge
+voidm search "specific topic" --scope my-repo --json  # add scope only if results are noisy
 ```
 
 ### Memory Add
