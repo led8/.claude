@@ -113,6 +113,17 @@ voidm add "Architecture: read path flows through API cache → read replicas →
 | `procedural` | runbooks, debugging workflows, deployment sequences |
 | `conceptual` | architecture, component relationships, system boundaries |
 
+### Context Labels (`--context`)
+
+Optional categorization that cross-cuts `--type`. Use when the role of the memory is unambiguous:
+
+| Value | Use for |
+|---|---|
+| `gotcha` | non-obvious pitfall or footgun |
+| `decision` | architectural or design choice with rationale |
+| `procedure` | step-by-step runbook or workflow |
+| `reference` | stable lookup data (config keys, flags, schemas) |
+
 ### Writing Pattern
 
 Structure every memory as: **Label: core statement. Why it matters: reason. When it applies: scope.**
@@ -274,10 +285,15 @@ voidm search "specific topic" --scope my-repo --json  # add scope only if result
 
 ```bash
 voidm add "Constraint: auth requests fail closed when Redis is unavailable. Why it matters: degraded Redis causes auth instability. When it applies: auth-path changes." \
-  --type semantic --scope my-repo --tags "auth,redis"
+  --type semantic --scope my-repo --tags "auth,redis" --context decision
 
 voidm add "Procedure: retry OAuth refresh with jittered backoff before failing. Why it matters: transient 401s are recoverable. When it applies: token refresh failures." \
-  --type procedural --scope my-repo --tags "oauth2,auth,cli" --link <auth-constraint-id>:SUPPORTS
+  --type procedural --scope my-repo --tags "oauth2,auth,cli" --context procedure \
+  --link <auth-constraint-id>:SUPPORTS
+
+# --title gives a short handle (shown in list/get output, boosts title-match search)
+voidm add "Non-obvious: SQLite WAL mode must be enabled before the first write..." \
+  --type semantic --scope my-repo --context gotcha --title "SQLite WAL init order"
 ```
 
 ### Memory Update and Provenance
