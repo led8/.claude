@@ -1,6 +1,6 @@
 You are Claude Code. You are running as a coding agent in the Claude Code CLI on a user's computer.
 
-# Project guideline
+# Repository guideline
 
 ## Coding expectations
 
@@ -14,7 +14,25 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
 - DO NOT overcomplicated things. - Always look for the simplest solution that works, and avoid adding unnecessary complexity or features that may not be needed.
 - RESPECT existing coding style and architecture.
 
-### Workflow
+### Documentation expectations
+
+- ALWAYS keep `README.md` up-to-date with the actual state of the project, and avoid generating it if not necessary. 
+- The `README.md` should be a good entry point for someone who wants to understand what the project is about, how to use it, and how to contribute to it.
+- The `README.md` MUST BE a high level documentation of the project, and should not contain implementation details. It should be concise and easy to read. ALWAYS use a `docs` folder with markdown files to provide implementation details for each topic, and link them in the `README.md`. 
+- USE the skills [Mermaid](skills/mermaid/) to generate diagrams when needed, and include them in the `README.md` to illustrate concepts and workflows.
+- DO NOT mention or use placeholders for environment variables in the `README.md`.
+
+### Security
+
+> **VERY IMPORTANT: Always prioritize security and privacy in your implementations.**
+
+- NEVER print environement variables directly.
+- ALWAYS ask the user before destructive actions (ex: removing a directory).
+- DO NOT OVERUSE EMOJIS.
+
+## Workflow
+
+> **Important:** For any new feature or significant issue, you MUST create a detailed implementation plan and share it with the user for validation before starting to code. This plan should include the following steps:
 
 - STEP 1 - Produce a high detail plan to implement the feature or solve the problem:
     - step 1.1 - A numbered plan with small, ordered steps.
@@ -40,13 +58,7 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
         - step 5.2.1 - create the corresponding `todo` file in `.spark_utils/todo/`.
     - step 5.3 - Once planned, do not proceed until I explicitly say: "GO" / "approved" / "ok".
 
-#### Plan and backlogs
-
-**Important:** ONLY generate such plan for new feature or significant issue. In other words, if you are building on an existing implementation of the plan you have just created, you can skip straight to the coding stage. However, make sure you keep the plan/backlog up-to-date. If you are in any doubt, ask whether a plan is required.
-
-#### Todo file
-
-**Important:** It should be kept up to date throughout implementation and revised after each new update.
+> **If you are building on an existing implementation of the plan you have just created, you can skip straight to the coding stage. However, make sure you keep the plan, backlog and todo up-to-date.**
 
 ### Utils
 
@@ -91,7 +103,7 @@ myproject/
 │       ├── ...
 ```
 
-#### `.spark_utils/todo` files structure
+#### `.spark_utils/todo` structure
 
 Each `todo` file should use a single implementation checklist like:
 
@@ -114,50 +126,84 @@ Each `todo` file should use a single implementation checklist like:
 ```
 
 Guidelines:
-	•	use [ ] for not done items
-	•	use [x] for completed items
-	•	keep items small, concrete, and action-oriented
-	•	update the checklist continuously while implementing
-	•	keep Blocked only for real blockers
-	•	do not use the todo file as a backlog replacement or as a detailed report
+- use [ ] for not done items
+- use [x] for completed items
+- keep items small, concrete, and action-oriented
+- update the checklist continuously while implementing
+- keep Blocked only for real blockers
+- do not use the todo file as a backlog replacement or as a detailed report
 
-## Persistent memory
+# Agent memory
 
-Use the [voidm-memory](skills/voidm-memory/) skill when working in an existing repository and when continuity across sessions matters.
+> Use the [agent-memory](skills/agent-memory/) skill when working in an existing repository and when continuity across turns or sessions matters. This is the default memory system for coding-assistant work. **Do not skip it on non-trivial repo work.**
 
-`voidm` has two storage lanes:
-- `voidm add` — durable repo knowledge: architecture, constraints, decisions, procedures, preferences
-- `voidm learn` — reusable tactics backed by a real agent run (strategy, recovery, optimization)
+**If Neo4j or the CLI is unavailable, say so briefly and continue the task without pretending memory succeeded.**
 
-**Do not use `voidm` as a replacement for `.spark_utils/backlog/`.**
+## Usage guidelines
 
-Keep:
-- active plans, validated execution steps, and short-term task tracking in `.spark_utils/backlog/`
-- durable long-term project knowledge in `voidm`
+### Mandatory usage triggers
 
-Recommended usage cadence:
-- run `voidm recall --scope my-repo` at the start of non-trivial work or when continuity is needed
-- for trivial edits, skip recall
-- for task-specific searches, start **unscoped** — `--scope` is a hard filter that silently excludes tips and cross-repo knowledge; add it only to reduce noise
-- do not store at every step; extract only at meaningful milestones
-- prefer search + `voidm update` over adding near-duplicate memories
-- keep writes sparse (typically 0–3 memories and 0–2 tips per substantial task)
+- at the start of non-trivial work in an existing repo: feature work, debugging, review, refactor, migration, architecture changes, CI or deployment work, auth or storage work, schema changes
+- when the user references prior work, earlier sessions, preferences, previous decisions, known constraints, or asks what happened before
+- before persisting any durable repo truth or user preference
+- after a verified outcome that should help future coding runs
 
-## Documentation expectations
+### Skip memory work only when all are true
 
-- ALWAYS keep `README.md` up-to-date with the actual state of the project, and avoid generating it if not necessary. 
-- The `README.md` should be a good entry point for someone who wants to understand what the project is about, how to use it, and how to contribute to it.
-- The `README.md` MUST BE a high level documentation of the project, and should not contain implementation details. It should be concise and easy to read. ALWAYS use a `docs` folder with markdown files to provide implementation details for each topic, and link them in the `README.md`. 
-- USE the skills [Mermaid](skills/mermaid/) to generate diagrams when needed, and include them in the `README.md` to illustrate concepts and workflows.
-- DO NOT mention or use placeholders for environment variables in the `README.md`.
+- the task is trivial and one-shot
+- continuity is not useful
+- no durable knowledge is likely to be reused
 
-## Security
+### Keep responsibilities separate
 
-**VERY IMPORTANT: Always prioritize security and privacy in your implementations.**
+- `.spark_utils/backlog/` and `.spark_utils/todo/` are for active planning and execution tracking
+- `agent-memory` short-term is for selective task-local conversation and observations
+- `agent-memory` reasoning is for concise trace steps on non-trivial multi-step work
+- `agent-memory` long-term is for durable facts, preferences, and entities that should help future runs
 
-- NEVER print environement variables directly.
-- ALWAYS ask the user before destructive actions (ex: removing a directory).
-- DO NOT OVERUSE EMOJIS.
+### Standard operating cadence
+
+- run startup recall once at the beginning of non-trivial repo work by following the `agent-memory` skill workflow
+- add short-term memory selectively, only when it materially helps the active task
+- start a reasoning trace for multi-step, uncertain, or tool-heavy work
+- search or inspect before durable writes to avoid duplicates and wrong updates
+- treat long-term memory as review-first: first classify the candidate, then persist it
+- at meaningful milestones, persist only durable knowledge that is likely to matter again
+
+## Durable memory guidelines
+
+> Persist durable memory only when the information is validated enough to help a future run. If it is ambiguous, temporary, or weakly supported, do not store it.
+
+### Before any durable write, identify
+
+- memory type: `fact`, `preference`, or `entity`
+- why it is durable and reusable
+- source: user explicit, code verified, docs verified, test verified, or run observation
+- evidence: short concrete support
+- confidence: high, medium, or low
+
+### Durable memory policy
+
+- `facts` are for stable repo truths, constraints, decisions, invariants, migration knowledge, and runbooks
+- `preferences` are for durable user or workflow preferences that should shape future behavior
+- `entities` are for important nouns worth reusing and linking later
+- use `replace-fact` and `replace-preference` when durable knowledge changes or becomes obsolete
+- use `update-entity`, `alias-entity`, and `merge-entity` for same-identity entity maintenance
+- use `delete` only for cleanup after inspection, never as the normal path for durable change
+
+## What not to store
+
+- backlog items, todo items, task logs, raw shell output, noisy command history, temporary notes, speculative hypotheses, or full chain-of-thought
+- every user or assistant turn by default
+- duplicate durable memories that were not searched first
+
+## Behavior requirements for the agent
+
+- never claim memory was recalled, searched, or stored unless the tool actually succeeded
+- if retrieval returns nothing, say so and continue
+- if the tool is available, prefer it over relying on unstated recollection
+- do not replace `.spark_utils` planning with memory writes
+- keep writes sparse and high-signal; quality matters more than volume
 
 # SKILLS guideline
 
