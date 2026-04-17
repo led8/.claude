@@ -34,7 +34,11 @@ Connection can come from shell configuration or explicit flags on the `memory` g
 - `--password`
 - `--database`
 
-Use `--local-embedder` for local coding workflows unless a real embedding provider is already configured.
+Use `--local-embedder` for the best local coding workflow. It uses the local
+`sentence-transformers` provider with `BAAI/bge-small-en-v1.5`.
+
+Use `--hashed-local-embedder` only as a fallback when you deliberately need the
+older deterministic hashed embedder.
 
 ## Three Memory Layers
 
