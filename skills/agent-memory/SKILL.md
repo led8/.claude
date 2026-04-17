@@ -114,10 +114,20 @@ Start Neo4j:
 docker compose -f docker-compose.test.yml up -d
 ```
 
+If the repo provides a local `.env.test` and `docker-compose.test.yml` reads
+`NEO4J_TEST_PASSWORD`, preload the shell for memory commands with:
+
+```bash
+set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD"
+```
+
+Use this prefix only for repos that actually follow that test-password pattern.
+
 Build a task-scoped session:
 
 ```bash
-neo4j-agent-memory memory --local-embedder session-id \
+set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD" \
+  neo4j-agent-memory memory --local-embedder session-id \
   --repo agent-memory \
   --task "debug extraction"
 ```
@@ -127,7 +137,8 @@ The returned `session_id` is the handle for the active coding task.
 Assemble startup recall for that task:
 
 ```bash
-neo4j-agent-memory memory --local-embedder recall \
+set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD" \
+  neo4j-agent-memory memory --local-embedder recall \
   --repo agent-memory \
   --task "debug extraction" \
   --session-id "coding/agent-memory/debug-extraction/run-1"
