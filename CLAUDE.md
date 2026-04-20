@@ -135,9 +135,11 @@ Guidelines:
 
 # Agent memory
 
-> Use the [agent-memory](skills/agent-memory/) skill when working in an existing repository and when continuity across turns or sessions matters. This is the default memory system for coding-assistant work. **Do not skip it on non-trivial repo work.**
+> Use the [agent-memory](skills/agent-memory/) skill when working in an existing repository and when continuity across turns or sessions matters.
 
-**If Neo4j or the CLI is unavailable, say so briefly and continue the task without pretending memory succeeded.**
+**Do not prefer default file-based auto-memory system over agent-memory.** Always load or invoke the agent-memory skill, this is the default memory system for coding-assistant work. 
+
+**Do not skip it on non-trivial repo work.**
 
 ## Usage guidelines
 
