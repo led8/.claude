@@ -44,7 +44,24 @@ This is the opinionated coding-startup view. It keeps the current task stream,
 durable repo facts and preferences, entities, and similar reasoning traces in
 one compact response.
 
-## 3. Short-Term Memory
+Treat this as the session-start anchor, not as the only retrieval point. On
+later turns, decide whether `search` or `get-context` is needed before you
+reply.
+
+## 3. Turn Checkpoints
+
+Every user turn and every assistant final response is a memory checkpoint. This
+means you explicitly decide whether to read, write, update, or skip. It does
+not mean every turn becomes a mandatory write.
+
+Typical decisions:
+- use `search` when you need one fact, preference, entity, or message thread
+- use `get-context` when you need a compact combined view for the current turn
+- use `add-message` only when the turn materially helps task continuity
+- update `reasoning` only on meaningful steps
+- review durable memory only when the information is likely reusable later
+
+## 4. Short-Term Memory
 
 ### Add The Current User Turn
 
@@ -75,7 +92,7 @@ Use this only when the exact message entry is wrong or should be removed.
 Keep `short-term` selective: store the actual task conversation and a few key
 observations, not every command and raw terminal output.
 
-## 4. Reasoning Memory
+## 5. Reasoning Memory
 
 ### Start A Trace
 
@@ -114,7 +131,7 @@ neo4j-agent-memory memory --local-embedder complete-trace \
   --success
 ```
 
-## 5. Long-Term Candidate Review
+## 6. Long-Term Candidate Review
 
 Use the review block before any durable write.
 
@@ -165,7 +182,7 @@ decision_needed: persist | ignore
 
 This stays review-only by default because an observation alone is not enough for automatic durable storage.
 
-## 6. Durable Writes
+## 7. Durable Writes
 
 ### Add A Fact
 
@@ -202,7 +219,7 @@ neo4j-agent-memory memory --local-embedder add-entity \
 
 Exact same-name same-type entity writes should reuse the existing entity.
 
-## 7. Durable Modification
+## 8. Durable Modification
 
 ### Replace A Fact
 
@@ -265,7 +282,7 @@ The target stays canonical. Useful links and aliases are transferred from the so
 
 Use `delete --kind entity --id <entity-uuid>` only if the entity is clearly wrong, duplicate test noise, or otherwise needs cleanup rather than correction.
 
-## 8. Retrieval
+## 9. Retrieval
 
 ### Startup Recall For Coding Work
 
@@ -323,7 +340,19 @@ neo4j-agent-memory memory --local-embedder get-context \
 Use `get-context` when you want the lower-level generic assembly. Use `recall`
 when you want the coding-oriented startup view.
 
-## 9. Delete By UUID
+### Mid-Task Context Refresh
+
+```bash
+neo4j-agent-memory memory --local-embedder get-context \
+  --session-id "coding/agent-memory/debug-extraction/run-1" \
+  --query "What prior constraint matters for this user turn?" \
+  --max-items 5
+```
+
+Use this when a later turn introduces new constraints or you need a compact
+combined reminder before replying.
+
+## 10. Delete By UUID
 
 ### Delete Durable Memory
 
@@ -349,7 +378,7 @@ For durable memory:
 - use `replace-fact` and `replace-preference` when something becomes obsolete but should remain historically traceable
 - use `delete` only for cleanup of clearly wrong, duplicate, parasite, or test-only entries
 
-## 10. Confidence Heuristics
+## 11. Confidence Heuristics
 
 ### `high`
 
@@ -383,7 +412,7 @@ Use `low` when the candidate is:
 
 Do not propose `low` candidates in V1.
 
-## 11. Empirical Discovery Patterns
+## 12. Empirical Discovery Patterns
 
 ### Bug Reproduced And Fixed
 

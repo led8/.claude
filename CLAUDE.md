@@ -1,10 +1,10 @@
-You are Claude Code. You are running as a coding agent in the Claude Code CLI on a user's computer.
+**Preliminary note: you must ALWAYS comply with the [Workflow expectations](#workflow-expectations) and the [Agent memory guidelines](#agent-memory-guidelines) as part of your the workflow.**
 
-# Repository guideline
+# Repository guidelines
 
 ## Coding expectations
 
-### General principles
+### General policy
 
 - KEEP IT SIMPLE - Prefer straightforward solutions over clever ones.
 - DO NOT BE OVERLY VERBOSE - Be concise in code and communication.
@@ -14,7 +14,7 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
 - DO NOT overcomplicated things. - Always look for the simplest solution that works, and avoid adding unnecessary complexity or features that may not be needed.
 - RESPECT existing coding style and architecture.
 
-### Documentation expectations
+### Documentation policy
 
 - ALWAYS keep `README.md` up-to-date with the actual state of the project, and avoid generating it if not necessary. 
 - The `README.md` should be a good entry point for someone who wants to understand what the project is about, how to use it, and how to contribute to it.
@@ -22,17 +22,17 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
 - USE the skills [Mermaid](skills/mermaid/) to generate diagrams when needed, and include them in the `README.md` to illustrate concepts and workflows.
 - DO NOT mention or use placeholders for environment variables in the `README.md`.
 
-### Security
+### Security and privacy policy
 
-> **VERY IMPORTANT: Always prioritize security and privacy in your implementations.**
+**VERY IMPORTANT: Always prioritize security and privacy in your implementations.**
 
 - NEVER print environement variables directly.
 - ALWAYS ask the user before destructive actions (ex: removing a directory).
 - DO NOT OVERUSE EMOJIS.
 
-## Workflow
+## Workflow expectations
 
-> **Important:** For any new feature or significant issue, you MUST create a detailed implementation plan and share it with the user for validation before starting to code. This plan should include the following steps:
+**Important: For any new task, feature or significant issue, you MUST create a detailed implementation plan and share it with the user for validation before starting to code. This plan should include the following steps:**
 
 - STEP 1 - Produce a high detail plan to implement the feature or solve the problem:
     - step 1.1 - A numbered plan with small, ordered steps.
@@ -42,7 +42,7 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
     - step 2.1 - Separate: mandatory / optional.
     - step 2.2 - Separate: runtime vs dev/test/tooling.
     - step 2.3 - For each dependency: why it's needed + minimal alternative (if relevant).
-- STEP 3 - List [skills](#skills-guideline) you will use (if any) to help you with the task:
+- STEP 3 - List skills you will use (if any) to help you with the task:
     - step 3.1 - Provide a bullet list of skills needed for the task
     - step 3.2 - For each skill, tag it as:
         - `[HAVE]` you can handle it and will use it
@@ -58,9 +58,11 @@ You are Claude Code. You are running as a coding agent in the Claude Code CLI on
         - step 5.2.1 - create the corresponding `todo` file in `.spark_utils/todo/`.
     - step 5.3 - Once planned, do not proceed until I explicitly say: "GO" / "approved" / "ok".
 
-> **If you are building on an existing implementation of the plan you have just created, you can skip straight to the coding stage. However, make sure you keep the plan, backlog and todo up-to-date.**
+**a [skills](skills) is a reusable instruction, typically as SKILL.md (often with scripts/, references/, or assets/).** You should use skills to extend your task-specific capabilities when a task, a feature or an issue clearly matches a skill's description.
 
-### Utils
+**MCP tools are API calls to X MCP Server, which provides access to X documentation, code samples, and other resources.** When you need to look up information, use the appropriate MCP tool based on the type of information you are seeking. You have access to MCP tools called. These tools allow you to search through and fetch X latest official documentation and code samples, and that information might be more detailed or newer than what's in your training data set. When handling questions around how to work with native technologies, please use these tools for research purposes when dealing with specific / narrowly defined questions that may occur.
+
+### Utils policy
 
 - ALWAYS create a `.spark_utils` (if it doesn't exist) folder at the root of the project for utility files.
 - Inside `.spark_utils`, create separate folders for different types of files:
@@ -133,50 +135,57 @@ Guidelines:
 - keep Blocked only for real blockers
 - do not use the todo file as a backlog replacement or as a detailed report
 
-# Agent memory
+# Agent memory guidelines
 
-> Use the [agent-memory](skills/agent-memory/) skill when working in an existing repository and when continuity across turns or sessions matters.
+Use the [agent-memory](skills/agent-memory/) skill when working in an existing repository and when continuity across turns or sessions matters.
 
 **Do not prefer default file-based auto-memory system over agent-memory.** Always load or invoke the agent-memory skill, this is the default memory system for coding-assistant work. 
 
 **Do not skip it on non-trivial repo work.**
 
-## Usage guidelines
+## Usage expectations
 
-### Mandatory usage triggers
+### Mandatory usage policy
 
+Memory work is mandatory in these situations:
+
+- at every user turn and before every assistant final response: explicitly evaluate whether agent-memory should be used for recall, search, get-context, short-term updates, reasoning updates, or durable-memory review
 - at the start of non-trivial work in an existing repo: feature work, debugging, review, refactor, migration, architecture changes, CI or deployment work, auth or storage work, schema changes
 - when the user references prior work, earlier sessions, preferences, previous decisions, known constraints, or asks what happened before
 - before persisting any durable repo truth or user preference
 - after a verified outcome that should help future coding runs
+- at the end of a session or meaningful stopping point: evaluate whether to complete the active trace and review durable candidates
 
-### Skip memory work only when all are true
+Skip memory work only when all are true:
 
 - the task is trivial and one-shot
 - continuity is not useful
 - no durable knowledge is likely to be reused
 
-### Keep responsibilities separate
+Keep responsibilities separate:
 
 - `.spark_utils/backlog/` and `.spark_utils/todo/` are for active planning and execution tracking
 - `agent-memory` short-term is for selective task-local conversation and observations
 - `agent-memory` reasoning is for concise trace steps on non-trivial multi-step work
 - `agent-memory` long-term is for durable facts, preferences, and entities that should help future runs
 
-### Standard operating cadence
+Standard operating cadence:
 
 - run startup recall once at the beginning of non-trivial repo work by following the `agent-memory` skill workflow
-- add short-term memory selectively, only when it materially helps the active task
-- start a reasoning trace for multi-step, uncertain, or tool-heavy work
+- treat session start and session end as anchors, not the only times memory should be considered
+- on every user turn, decide whether recall, search, or get-context is needed and whether the user turn belongs in short-term memory
+- add short-term memory selectively, only when it materially helps the active task or future continuity
+- start a reasoning trace for multi-step, uncertain, or tool-heavy work, then update it only on meaningful steps
+- before every assistant final response, decide whether to record the assistant turn, update reasoning, search or inspect for validation, or prepare a durable-memory candidate
 - search or inspect before durable writes to avoid duplicates and wrong updates
 - treat long-term memory as review-first: first classify the candidate, then persist it
-- at meaningful milestones, persist only durable knowledge that is likely to matter again
+- at meaningful milestones or session end, persist only durable knowledge that is likely to matter again and complete the trace when appropriate
 
-## Durable memory guidelines
+## Durable memory expectations
 
-> Persist durable memory only when the information is validated enough to help a future run. If it is ambiguous, temporary, or weakly supported, do not store it.
+**Persist durable memory only when the information is validated enough to help a future run. If it is ambiguous, temporary, or weakly supported, do not store it.**
 
-### Before any durable write, identify
+Before any durable write, identify:
 
 - memory type: `fact`, `preference`, or `entity`
 - why it is durable and reusable
@@ -193,48 +202,19 @@ Guidelines:
 - use `update-entity`, `alias-entity`, and `merge-entity` for same-identity entity maintenance
 - use `delete` only for cleanup after inspection, never as the normal path for durable change
 
-## What not to store
+## Memory quality expectations
+
+What not to store:
 
 - backlog items, todo items, task logs, raw shell output, noisy command history, temporary notes, speculative hypotheses, or full chain-of-thought
-- every user or assistant turn by default
+- every user or assistant turn by default; each turn is a checkpoint to evaluate memory use, not a mandatory write
 - duplicate durable memories that were not searched first
 
-## Behavior requirements for the agent
+Behavior requirements:
 
+- treat each turn boundary as a memory checkpoint and make an explicit read/write/update/skip decision
 - never claim memory was recalled, searched, or stored unless the tool actually succeeded
 - if retrieval returns nothing, say so and continue
 - if the tool is available, prefer it over relying on unstated recollection
 - do not replace `.spark_utils` planning with memory writes
 - keep writes sparse and high-signal; quality matters more than volume
-
-# SKILLS guideline
-
-**a SKILL is a reusable instruction, typically as SKILL.md (often with scripts/, references/, or assets/).**
-
-## How/when you must use skills?
-
-You should use skills to extend your task-specific capabilities when the request clearly matches a skill's description. For example, if a user asks for a specific data processing task and you have a skill that handles that type of processing, you should utilize that skill to fulfill the request efficiently and accurately.
-
-When using skills, ensure that you:
-
-- load that skill’s SKILL.md.
-- follow its workflow (and related scripts//references/ only as needed).
-- use the minimal set of skills if multiple apply.
-- and not carry skills into later turns unless re-mentioned.
-- NEVER print environement variables directly.
-
-## Where find skills?
-
-[skills](skills) folder contains all the skills you have access to.
-
-# MCP tools guideline
-
-**MCP tools are API calls to X MCP Server, which provides access to X documentation, code samples, and other resources.**
-
-## Querying MCP tools
-
-When you need to look up information, use the appropriate MCP tool based on the type of information you are seeking:
-
-You have access to MCP tools called. These tools allow you to search through and fetch X latest official documentation and code samples, and that information might be more detailed or newer than what's in your training data set.
-
-When handling questions around how to work with native technologies, please use these tools for research purposes when dealing with specific / narrowly defined questions that may occur.

@@ -10,15 +10,16 @@ description: Use local shell commands to operate Neo4j Agent Memory for coding-a
 1. Use local shell commands only. Do not assume direct Python object access.
 2. Keep Neo4j running locally before memory work.
 3. Use one `session_id` per active coding task.
-4. Write `short-term` selectively for the active task stream.
-5. Open `reasoning` traces only for non-trivial work.
-6. Treat `long-term` memory as review-first. Propose before persisting.
-7. Use `replace-fact` and `replace-preference` for durable modification. Obsolescence should create a new active entry and supersede the old one.
-8. Treat `delete` as cleanup, not as the normal obsolescence path for durable memory.
-9. Delete only by explicit UUID after inspection.
-10. Reuse exact same-name same-type entities first. Let resolution and deduplication handle fuzzy variants.
-11. Use `update-entity` for same-identity corrections, `alias-entity` for alternate names, and `merge-entity` for duplicate nodes that represent the same real thing.
-12. Do not emulate entity edits with delete and re-add unless the old entry is clearly wrong and should be cleaned up.
+4. Treat every user turn and every assistant final response as a memory checkpoint. Decide explicitly whether to read, write, update, or skip.
+5. Write `short-term` selectively for the active task stream.
+6. Open `reasoning` traces only for non-trivial work.
+7. Treat `long-term` memory as review-first. Propose before persisting.
+8. Use `replace-fact` and `replace-preference` for durable modification. Obsolescence should create a new active entry and supersede the old one.
+9. Treat `delete` as cleanup, not as the normal obsolescence path for durable memory.
+10. Delete only by explicit UUID after inspection.
+11. Reuse exact same-name same-type entities first. Let resolution and deduplication handle fuzzy variants.
+12. Use `update-entity` for same-identity corrections, `alias-entity` for alternate names, and `merge-entity` for duplicate nodes that represent the same real thing.
+13. Do not emulate entity edits with delete and re-add unless the old entry is clearly wrong and should be cleaned up.
 
 ## Command Surface
 
@@ -99,16 +100,41 @@ This layer is curated. In V1 it is review-first, not automatic.
 1. Start Neo4j locally.
 2. Build a task-scoped `session_id`.
 3. Run startup recall for the task session.
-4. Record the active task exchange in `short-term`, but keep it selective.
-5. Start a `reasoning` trace if the task is multi-step, uncertain, or tool-heavy.
-6. When durable knowledge becomes clear, prepare a `long-term` candidate.
-7. Review the candidate with the standard review block.
-8. Persist the reviewed candidate with `add-fact`, `add-preference`, or `add-entity`.
-9. If a durable fact or preference changes or becomes obsolete, use `replace-fact` or `replace-preference`.
-10. If an entity needs a same-identity correction, use `update-entity`. If it needs another name, use `alias-entity`. If two nodes represent the same entity, use `merge-entity`.
-11. Use `inspect`, `search`, `recall`, and `get-context` to validate and retrieve memory.
-12. Use `delete` or `delete-message` only after explicit inspection and confirmation.
-13. For durable memory, use `delete` only for cleanup of clearly wrong, duplicate, parasite, or test-only entries.
+4. Treat startup and session end as anchors, not as the only memory moments.
+5. On every user turn, decide whether to use `recall`, `search`, or `get-context`, and whether to add the user turn to `short-term`.
+6. Start a `reasoning` trace if the task is multi-step, uncertain, or tool-heavy.
+7. On meaningful execution steps, decide whether to add a trace step or tool call.
+8. Before every assistant final response, decide whether to add the assistant turn to `short-term`, update reasoning, inspect or search for validation, or prepare a durable candidate.
+9. When durable knowledge becomes clear, prepare a `long-term` candidate.
+10. Review the candidate with the standard review block.
+11. Persist the reviewed candidate with `add-fact`, `add-preference`, or `add-entity`.
+12. If a durable fact or preference changes or becomes obsolete, use `replace-fact` or `replace-preference`.
+13. If an entity needs a same-identity correction, use `update-entity`. If it needs another name, use `alias-entity`. If two nodes represent the same entity, use `merge-entity`.
+14. Use `inspect`, `search`, `recall`, and `get-context` to validate and retrieve memory.
+15. At session end or a meaningful stopping point, decide whether to `complete-trace`.
+16. Use `delete` or `delete-message` only after explicit inspection and confirmation.
+17. For durable memory, use `delete` only for cleanup of clearly wrong, duplicate, parasite, or test-only entries.
+
+## Turn-Based Decision Checkpoints
+
+At each checkpoint, decide whether memory use is needed. This is not a mandatory write.
+
+### On Every User Turn
+
+- decide whether startup recall is enough or whether you need `search` or `get-context`
+- decide whether the new user turn should be added to `short-term`
+- decide whether the task now warrants opening or updating a `reasoning` trace
+
+### Before Every Assistant Final Response
+
+- decide whether the assistant turn should be added to `short-term`
+- decide whether the trace needs a new step, tool call, or completion
+- decide whether a durable `fact`, `preference`, or `entity` candidate emerged
+
+### At Session Start And Session End
+
+- at session start, run `recall` for the task-scoped session
+- at session end or a meaningful pause, review whether `complete-trace` and a durable-memory review are appropriate
 
 ## Startup And Session Commands
 
@@ -118,8 +144,7 @@ Start Neo4j:
 docker compose -f docker-compose.test.yml up -d
 ```
 
-If the repo provides a local `.env.test` and `docker-compose.test.yml` reads
-`NEO4J_TEST_PASSWORD`, preload the shell for memory commands with:
+**The repo provides a local `.env.test` and `docker-compose.test.yml`, so read `NEO4J_TEST_PASSWORD`, preload the shell for memory commands with:**
 
 ```bash
 set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD"
