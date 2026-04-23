@@ -9,14 +9,11 @@
   - `docker build . -f Dockerfile` OR
   - `docker compose build`
 
-## Best Practices
-- Prefer multistage builds
-- Prefer non-root users
-- Prefer rootless, distroless images for production
-
-## Image Selection
-- Always prefer Alpine as base image
-- May use Debian-based images when needed
+## Default Preferences
+- Prefer multi-stage builds when they reduce runtime size or isolate build tooling
+- Prefer non-root users for long-running application containers
+- Prefer smaller runtime images when they remain compatible with the app and its dependencies
+- Choose the base image for compatibility first, then size and hardening
 
 ## Proxy Configuration
 - Always pass proxy configuration as build args:
@@ -30,7 +27,6 @@
 
 Example in Dockerfile:
 ```Dockerfile
-# Set build arguments for proxy configuration
 ARG http_proxy
 ARG https_proxy
 ARG no_proxy
@@ -38,11 +34,11 @@ ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG NO_PROXY
 
-# No http_proxy, https_proxy, ... environment variables
+# Use these only as build arguments, not runtime ENV values
 ```
 
 ## SSL Certificates
-Always install corporate SSL certificate:
+Install the corporate SSL certificate only when the environment or dependency chain requires it:
 
 ```Dockerfile
 # Configure SSL certificates, example for debian based image (ubuntu, ...)

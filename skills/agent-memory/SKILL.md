@@ -1,45 +1,56 @@
 ---
 name: agent-memory
-description: Use local shell commands to operate Neo4j Agent Memory for coding-agent workflows with task-scoped sessions, concise reasoning traces, and review-first durable memory.
+description: Portable wrapper and workflow for Neo4j Agent Memory in task-scoped coding sessions.
 ---
 
 # Agent Memory
 
-## Core Rules
+Use this skill for non-trivial coding work when task continuity or durable repo knowledge matters.
 
-1. Use local shell commands only. Do not assume direct Python object access.
-2. Keep Neo4j running locally before memory work.
-3. Use one `session_id` per active coding task.
-4. Treat every user turn and every assistant final response as a memory checkpoint. Decide explicitly whether to read, write, update, or skip.
-5. Write `short-term` selectively for the active task stream.
-6. Open `reasoning` traces only for non-trivial work.
-7. Treat `long-term` memory as review-first. Propose before persisting.
-8. Use `replace-fact` and `replace-preference` for durable modification. Obsolescence should create a new active entry and supersede the old one.
-9. Treat `delete` as cleanup, not as the normal obsolescence path for durable memory.
-10. Delete only by explicit UUID after inspection.
-11. Reuse exact same-name same-type entities first. Let resolution and deduplication handle fuzzy variants.
-12. Use `update-entity` for same-identity corrections, `alias-entity` for alternate names, and `merge-entity` for duplicate nodes that represent the same real thing.
-13. Do not emulate entity edits with delete and re-add unless the old entry is clearly wrong and should be cleaned up.
+## Read First
 
-## Command Surface
+- [scripts/agent-memory.sh](scripts/agent-memory.sh)
+- [references/examples.md](references/examples.md)
 
-Use the `memory` CLI group:
+## What This Skill Adds
+
+This skill is not a generic memory tutorial. It adds a portable local workflow for Codex:
+
+- one wrapper command that finds `neo4j-agent-memory`
+- automatic `.env` loading when the tool repo provides one
+- automatic `--local-embedder` injection for `memory ...` commands
+- a simple cadence: startup, milestone, finish
+- clear behavior when Neo4j is blocked by the sandbox
+
+## Wrapper First
+
+Prefer the wrapper instead of hardcoded machine paths:
 
 ```bash
-neo4j-agent-memory memory --local-embedder <command> ...
+skills/agent-memory/scripts/agent-memory.sh doctor
 ```
 
-Connection can come from shell configuration or explicit flags on the `memory` group:
-- `--uri`
-- `--user`
-- `--password`
-- `--database`
+The wrapper tries, in order:
 
-Use `--local-embedder` for the best local coding workflow. It uses the local
-`sentence-transformers` provider with `BAAI/bge-small-en-v1.5`.
+1. `AGENT_MEMORY_BIN`
+2. `AGENT_MEMORY_HOME/.venv/bin/neo4j-agent-memory`
+3. `neo4j-agent-memory` on `PATH`
+4. common repo locations under `~/code`, `~/src`, and `~/projects`
 
-Use `--hashed-local-embedder` only as a fallback when you deliberately need the
-older deterministic hashed embedder.
+If a tool home is found, the wrapper loads its `.env` file automatically.
+If the command starts with `memory`, the wrapper adds `--local-embedder`
+unless you already passed `--local-embedder` or `--hashed-local-embedder`.
+
+## Core Rules
+
+1. Use one `session_id` per active coding task.
+2. Use `short-term` selectively for task continuity, not raw shell logs.
+3. Open `reasoning` traces only for multi-step or uncertain work.
+4. Treat long-term memory as review-first.
+5. Search or inspect before durable writes.
+6. Use `replace-fact` and `replace-preference` when durable entries change.
+7. Use `update-entity`, `alias-entity`, and `merge-entity` for same-identity entity maintenance.
+8. Never inline literal secrets in commands or examples.
 
 ## Three Memory Layers
 
@@ -97,137 +108,41 @@ This layer is curated. In V1 it is review-first, not automatic.
 
 ## Standard Workflow
 
-1. Start Neo4j locally.
-2. Build a task-scoped `session_id`.
-3. Run startup recall for the task session.
-4. Treat startup and session end as anchors, not as the only memory moments.
-5. On every user turn, decide whether to use `recall`, `search`, or `get-context`, and whether to add the user turn to `short-term`.
-6. Start a `reasoning` trace if the task is multi-step, uncertain, or tool-heavy.
-7. On meaningful execution steps, decide whether to add a trace step or tool call.
-8. Before every assistant final response, decide whether to add the assistant turn to `short-term`, update reasoning, inspect or search for validation, or prepare a durable candidate.
-9. When durable knowledge becomes clear, prepare a `long-term` candidate.
-10. Review the candidate with the standard review block.
-11. Persist the reviewed candidate with `add-fact`, `add-preference`, or `add-entity`.
-12. If a durable fact or preference changes or becomes obsolete, use `replace-fact` or `replace-preference`.
-13. If an entity needs a same-identity correction, use `update-entity`. If it needs another name, use `alias-entity`. If two nodes represent the same entity, use `merge-entity`.
-14. Use `inspect`, `search`, `recall`, and `get-context` to validate and retrieve memory.
-15. At session end or a meaningful stopping point, decide whether to `complete-trace`.
-16. Use `delete` or `delete-message` only after explicit inspection and confirmation.
-17. For durable memory, use `delete` only for cleanup of clearly wrong, duplicate, parasite, or test-only entries.
+### 1. Startup
 
-## Turn-Based Decision Checkpoints
-
-At each checkpoint, decide whether memory use is needed. This is not a mandatory write.
-
-### On Every User Turn
-
-- decide whether startup recall is enough or whether you need `search` or `get-context`
-- decide whether the new user turn should be added to `short-term`
-- decide whether the task now warrants opening or updating a `reasoning` trace
-
-### Before Every Assistant Final Response
-
-- decide whether the assistant turn should be added to `short-term`
-- decide whether the trace needs a new step, tool call, or completion
-- decide whether a durable `fact`, `preference`, or `entity` candidate emerged
-
-### At Session Start And Session End
-
-- at session start, run `recall` for the task-scoped session
-- at session end or a meaningful pause, review whether `complete-trace` and a durable-memory review are appropriate
-
-## Startup And Session Commands
-
-Start Neo4j:
+Run this once for the active task:
 
 ```bash
-docker compose -f docker-compose.test.yml up -d
+skills/agent-memory/scripts/agent-memory.sh memory session-id --repo <repo> --task "<task>"
+skills/agent-memory/scripts/agent-memory.sh memory recall --repo <repo> --task "<task>" --session-id "<session-id>"
 ```
 
-**The repo provides a local `.env.test` and `docker-compose.test.yml`, so read `NEO4J_TEST_PASSWORD`, preload the shell for memory commands with:**
+Use startup recall as the anchor for non-trivial repo work.
 
-```bash
-set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD"
-```
+### 2. Milestone
 
-Use this prefix only for repos that actually follow that test-password pattern.
+During the task, choose the smallest useful action:
 
-Build a task-scoped session:
+- `search` for one fact, preference, entity, or message thread
+- `get-context` for a compact combined view
+- `add-message` only when the turn materially helps continuity
+- `start-trace` and `complete-trace` only for multi-step work
 
-```bash
-set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD" \
-  neo4j-agent-memory memory --local-embedder session-id \
-  --repo agent-memory \
-  --task "debug extraction"
-```
+### 3. Finish
 
-The returned `session_id` is the handle for the active coding task.
+At a meaningful stopping point:
 
-Assemble startup recall for that task:
+- update reasoning if the trace gained a useful result
+- review durable memory candidates
+- persist only validated durable knowledge
 
-```bash
-set -a; source .env.test; set +a; NEO4J_PASSWORD="$NEO4J_TEST_PASSWORD" \
-  neo4j-agent-memory memory --local-embedder recall \
-  --repo agent-memory \
-  --task "debug extraction" \
-  --session-id "coding/agent-memory/debug-extraction/run-1"
-```
+## Availability And Sandbox Policy
 
-## Short-Term Commands
+If the wrapper cannot find the binary, `.env`, or a working CLI path, report the failure once for the active task and keep that unavailable state sticky until something changes.
 
-Add the current user or assistant turn:
+If the CLI works but Neo4j access fails with a localhost permission error from Codex, treat that as a sandbox issue. Retry with an escalated command instead of declaring the backend unavailable.
 
-```bash
-neo4j-agent-memory memory --local-embedder add-message \
-  --session-id "coding/agent-memory/debug-extraction/run-1" \
-  --role user \
-  "Investigate why extracted entities are not linked."
-```
-
-Delete a short-term message only by UUID:
-
-```bash
-neo4j-agent-memory memory --local-embedder delete-message --id <message-uuid>
-```
-
-## Reasoning Commands
-
-Start a trace:
-
-```bash
-neo4j-agent-memory memory --local-embedder start-trace \
-  --session-id "coding/agent-memory/debug-extraction/run-1" \
-  --task "debug entity linking"
-```
-
-Add a reasoning step:
-
-```bash
-neo4j-agent-memory memory --local-embedder add-trace-step \
-  --trace-id <trace-uuid> \
-  --thought "Check whether the message links to the persisted entity id." \
-  --action "Inspect short-term entity linking logic."
-```
-
-Record a tool call:
-
-```bash
-neo4j-agent-memory memory --local-embedder add-tool-call \
-  --step-id <step-uuid> \
-  --tool-name rg \
-  --arguments-json "{\"pattern\":\"MENTIONS\",\"path\":\"src\"}" \
-  --result-text "Found short-term linking query." \
-  --auto-observation
-```
-
-Complete the trace:
-
-```bash
-neo4j-agent-memory memory --local-embedder complete-trace \
-  --trace-id <trace-uuid> \
-  --outcome "Confirmed the persisted entity id must be reused after MERGE." \
-  --success
-```
+If the backend stays unavailable after a real retry, continue the task without memory and mention the known unavailable state only when it changes or when the final response needs that context.
 
 ## Long-Term Candidate Review
 
@@ -268,141 +183,6 @@ Practical rule:
 - reproduced bug plus verified fix: often `high`
 - doc mismatch: becomes `high` only after actual repo behavior is confirmed
 
-### Durable Write Commands
+## Related Reference
 
-Persist a reviewed fact:
-
-```bash
-neo4j-agent-memory memory --local-embedder add-fact \
-  --repo agent-memory \
-  --task "debug extraction" \
-  --subject "Short-term extraction" \
-  --predicate "linking_rule" \
-  --object-value "must use persisted entity id returned after Neo4j MERGE"
-```
-
-Persist a reviewed preference:
-
-```bash
-neo4j-agent-memory memory --local-embedder add-preference \
-  --repo agent-memory \
-  --task "skill design" \
-  --category workflow \
-  --preference "Prefer explicit CLI CRUD operations" \
-  --context "agent-memory skill"
-```
-
-Persist or reuse a curated entity:
-
-```bash
-neo4j-agent-memory memory --local-embedder add-entity \
-  --repo agent-memory \
-  --task "skill design" \
-  --name "GLiNER" \
-  --type OBJECT \
-  --description "Local entity extraction component"
-```
-
-Facts and preferences are idempotent in the same durable scope. Replaying the same add command should reuse the existing active durable entry instead of creating a duplicate.
-
-### Durable Modification Commands
-
-When a fact changes or becomes obsolete, create a new active fact and supersede the old one:
-
-```bash
-neo4j-agent-memory memory --local-embedder replace-fact \
-  --id <fact-uuid> \
-  --object-value "must use the persisted entity id returned by Neo4j after MERGE"
-```
-
-When a preference changes or becomes obsolete, create a new active preference and supersede the old one:
-
-```bash
-neo4j-agent-memory memory --local-embedder replace-preference \
-  --id <preference-uuid> \
-  --preference "Prefer explicit CLI memory CRUD commands"
-```
-
-For same-identity entity corrections, keep the existing entity and update its canonical fields:
-
-```bash
-neo4j-agent-memory memory --local-embedder update-entity \
-  --id <entity-uuid> \
-  --name "Neo4j Agent Memory" \
-  --description "Graph-native agent memory package"
-```
-
-If you discover another valid name for the same entity, add it as an alias:
-
-```bash
-neo4j-agent-memory memory --local-embedder alias-entity \
-  --id <entity-uuid> \
-  --alias "agent-memory"
-```
-
-If two entity nodes are duplicates of the same real thing, merge the duplicate into the canonical node:
-
-```bash
-neo4j-agent-memory memory --local-embedder merge-entity \
-  --source-id <duplicate-entity-uuid> \
-  --target-id <canonical-entity-uuid>
-```
-
-Use `delete --kind entity --id <entity-uuid>` only when the entity is clearly wrong, duplicate test noise, or otherwise needs cleanup rather than correction.
-
-## Retrieval And Review Commands
-
-Inspect one entry by UUID:
-
-```bash
-neo4j-agent-memory memory --local-embedder inspect --kind fact --id <fact-uuid>
-```
-
-Search a layer:
-
-```bash
-neo4j-agent-memory memory --local-embedder search \
-  --kind fact \
-  --query "persisted entity id" \
-  --threshold 0.0
-```
-
-Assemble combined context:
-
-```bash
-neo4j-agent-memory memory --local-embedder get-context \
-  --session-id "coding/agent-memory/debug-extraction/run-1" \
-  --query "How should I handle durable coding-agent memory from the shell?"
-```
-
-## Deletion Rules
-
-Delete only after inspection and only by explicit UUID.
-
-For durable memory, `delete` is a cleanup operation:
-- use `replace-fact` and `replace-preference` when a durable fact or preference becomes obsolete
-- use `update-entity`, `alias-entity`, and `merge-entity` for entity maintenance before considering `delete`
-- use `delete` only when an entry is clearly wrong, duplicate, parasite, or test-only
-- do not use `delete` as the normal history-preserving path for durable memory changes
-
-Delete durable memory:
-
-```bash
-neo4j-agent-memory memory --local-embedder delete --kind fact --id <fact-uuid>
-```
-
-Delete short-term memory:
-
-```bash
-neo4j-agent-memory memory --local-embedder delete-message --id <message-uuid>
-```
-
-Prefer `replace-fact` and `replace-preference` over delete-and-readd for durable memory changes or obsolescence.
-
-## References
-
-Read `references/examples.md` when you need:
-- full command examples for each memory layer
-- review examples for `fact`, `preference`, and `entity`
-- concrete cases for `high`, `medium`, and `low`
-- examples of inspect, search, get-context, replace, update, alias, merge, and delete flows
+- Use [references/examples.md](references/examples.md) for short runnable command patterns.

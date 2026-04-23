@@ -142,6 +142,11 @@ At each checkpoint, explicitly decide whether to:
 
 **This is a mandatory decision point, not a mandatory memory write.**
 
+If memory infrastructure becomes unavailable for the current task, keep a
+sticky task-local availability state. Retry when something changes or when a
+later step truly benefits from retrying, rather than re-running the same failed
+memory call every turn.
+
 ## 2.3 Required usage moments
 
 Memory use is required in these situations:
@@ -183,6 +188,11 @@ Rules:
 - if a memory action fails, say so briefly
 - keep reporting short and factual
 - do not expose secrets, raw credentials, or unnecessary raw tool output
+
+If the backend is known unavailable and you already reported that failure for
+the active task, you may omit repeated `memory: skip` lines on intermediate
+turns while the state remains unchanged. Report again when you retry, recover,
+or reach the final response and the unavailable state still matters.
 
 ## 2.5 Memory quality rules
 
