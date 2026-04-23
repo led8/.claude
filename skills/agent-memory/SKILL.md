@@ -21,33 +21,6 @@ description: Use local shell commands to operate Neo4j Agent Memory for coding-a
 12. Use `update-entity` for same-identity corrections, `alias-entity` for alternate names, and `merge-entity` for duplicate nodes that represent the same real thing.
 13. Do not emulate entity edits with delete and re-add unless the old entry is clearly wrong and should be cleaned up.
 
-## Reporting Contract
-
-Memory use must be observable by the user.
-
-At every memory checkpoint, emit one short line that states:
-- the memory action taken: `recall`, `search`, `get-context`, `short-term write`, `reasoning update`, `durable review`, or `skip`
-- the reason for that decision
-
-Examples:
-- `memory: recall — startup for a non-trivial repo task`
-- `memory: search — checking for an existing durable fact before writing`
-- `memory: short-term write — the new user constraint may matter later in this task`
-- `memory: skip — no useful continuity and no durable signal`
-
-After any actual memory tool call, emit one short result line:
-- `memory result: recalled 2 relevant facts`
-- `memory result: no relevant memory found`
-- `memory result: stored short-term message`
-- `memory result: durable candidate reviewed, no write`
-- `memory result: skipped`
-
-Rules:
-- never claim a memory action succeeded unless it actually succeeded
-- if a memory action fails, say so briefly
-- keep reporting short and factual
-- do not expose secrets, raw credentials, or unnecessary raw tool output
-
 ## Command Surface
 
 Use the `memory` CLI group:

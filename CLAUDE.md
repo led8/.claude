@@ -154,15 +154,35 @@ Memory use is required in these situations:
 
 ## 2.4 Reporting requirement
 
-**You must always state what you are doing with memory and why.**
+**You must always state what you are doing with memory and why.** Memory use must be observable by the user.
 
-For each memory checkpoint, you must communicate one short explicit decision, for example:
-- `memory: recall — startup for a non-trivial repo task`
-- `memory: search — checking whether this durable fact already exists`
-- `memory: short-term write — this user constraint is likely useful later in the task`
-- `memory: skip — no continuity needed and nothing durable is likely to emerge`
+For each memory checkpoint, you must communicate one short explicit decision:
+- the memory action taken: `recall`, `search`, `get-context`, `short-term write`, `reasoning update`, `durable review`, or `skip`
+- the reason for that decision
+
+Examples:
+- `✅ memory: recall — startup for a non-trivial repo task`
+- `✅ memory: search — checking whether this durable fact already exists`
+- `✅ memory: get-context — looking for recent relevant context to inform next steps`
+- `🎯 memory: short-term write — this user constraint is likely useful later in the task`
+- `🎯 memory: update reasoning — this new insight should be integrated into the multi-step trace`
+- `🎯 memory: review candidate — this fact seems durable and worth reviewing for long-term storage`
+- `🚫 memory: skip — no continuity needed and nothing durable is likely to emerge`
 
 If a memory action is executed, you must also report the result briefly and truthfully.
+
+Examples:
+- `ℹ️ memory result: recalled 2 relevant facts`
+- `ℹ️ memory result: no relevant memory found`
+- `ℹ️ memory result: stored short-term message`
+- `ℹ️ memory result: durable candidate reviewed, no write`
+- `ℹ️ memory result: skipped`
+
+Rules:
+- never claim a memory action succeeded unless it actually succeeded
+- if a memory action fails, say so briefly
+- keep reporting short and factual
+- do not expose secrets, raw credentials, or unnecessary raw tool output
 
 ## 2.5 Memory quality rules
 
