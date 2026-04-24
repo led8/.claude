@@ -125,7 +125,7 @@ Use this practical distinction:
 - `trivial`: one-shot work, low risk, no meaningful continuity needed, and no likely durable memory outcome
 - `non-trivial`: repo state matters, prior context may matter, the task spans multiple steps or turns, or durable knowledge may emerge
 
-As a rule of thumb, most implementation, debugging, review, refactor, migration, CI, deployment, storage, auth, schema, or architecture work in an existing repo is `non-trivial`.
+**As a rule of thumb, most implementation, debugging, review, refactor, migration, CI, deployment, storage, auth, schema, or architecture work in an existing repo is `non-trivial`.**
 
 ## 2.2 Memory checkpoint policy
 
