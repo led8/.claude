@@ -5,47 +5,46 @@ Use these examples when the skill summary is not enough.
 All examples use the portable wrapper:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh ...
+agent-memory ...
 ```
 
-The wrapper auto-loads the tool repo `.env` when it can find it and injects
-`--local-embedder` for `memory ...` commands.
+The wrapper auto-loads the tool repo `.env` when it can find it and injects `--local-embedder` for `memory ...` commands.
 
-## 1. Doctor
+## 1. Doctor (preflight, once per session)
 
-Check whether the local setup is discoverable before you conclude memory is unavailable:
+Always run this before the first `memory ...` call in a session:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh doctor
+agent-memory doctor
 ```
+
+Parse the output to decide whether memory is available. See the `Step 0` and `Availability And Sandbox Policy` sections of `SKILL.md` for how to act on each field. If the preflight fails, do not loop on `memory ...` commands.
 
 ## 2. Startup
 
 Create a task-scoped session id:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory session-id \
-  --repo codex \
+agent-memory memory session-id \
+  --repo claude \
   --task "audit embedded skills"
 ```
 
 Then run startup recall:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory recall \
-  --repo codex \
+agent-memory memory recall \
+  --repo claude \
   --task "audit embedded skills" \
-  --session-id "coding/codex/audit-embedded-skills/run-1"
+  --session-id "coding/claude/audit-embedded-skills/run-1"
 ```
-
-If Neo4j access fails with `Operation not permitted`, retry the same command with an escalated shell execution from Codex.
 
 ## 3. Mid-Task Retrieval
 
 Use `search` when you want one layer:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory search \
+agent-memory memory search \
   --kind fact \
   --query "docker proxy build args"
 ```
@@ -53,13 +52,13 @@ skills/agent-memory/scripts/agent-memory.sh memory search \
 Use `get-context` when you want a compact combined view:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory get-context \
+agent-memory memory get-context \
   --query "current task constraints for docker skill audit" \
-  --session-id "coding/codex/audit-embedded-skills/run-1" \
+  --session-id "coding/claude/audit-embedded-skills/run-1" \
   --include-short-term \
   --include-long-term \
   --include-reasoning \
-  --max-items 3
+  --max-items 6
 ```
 
 ## 4. Short-Term Memory
@@ -67,18 +66,18 @@ skills/agent-memory/scripts/agent-memory.sh memory get-context \
 Store only task-useful turns:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory add-message \
-  --session-id "coding/codex/audit-embedded-skills/run-1" \
+agent-memory memory add-message \
+  --session-id "coding/<repo>/<task-slug>/run-1" \
   --role user \
   --no-extract-entities \
   --no-extract-relations \
-  "User wants an audit of embedded Codex skills."
+  "User confirmed the target constraint for this task."
 ```
 
 Delete a short-term message only by UUID after inspection:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory delete-message --id <message-uuid>
+agent-memory memory delete-message --id <message-uuid>
 ```
 
 ## 5. Reasoning
@@ -86,15 +85,15 @@ skills/agent-memory/scripts/agent-memory.sh memory delete-message --id <message-
 Open a trace only for multi-step work:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory start-trace \
-  --session-id "coding/codex/audit-embedded-skills/run-1" \
+agent-memory memory start-trace \
+  --session-id "coding/claude/audit-embedded-skills/run-1" \
   --task "audit embedded skills"
 ```
 
 Add a step:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory add-trace-step \
+agent-memory memory add-trace-step \
   --trace-id <trace-uuid> \
   --thought "Check whether the skill adds non-obvious instructions." \
   --action "Read the skill and compare it with agent defaults."
@@ -103,7 +102,7 @@ skills/agent-memory/scripts/agent-memory.sh memory add-trace-step \
 Complete the trace at a milestone or task end:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory complete-trace \
+agent-memory memory complete-trace \
   --trace-id <trace-uuid> \
   --outcome "Reduced generic skills and kept only policy-heavy ones." \
   --success
@@ -129,8 +128,8 @@ decision_needed: persist | ignore
 If the candidate is approved and durable, write it:
 
 ```bash
-skills/agent-memory/scripts/agent-memory.sh memory add-fact \
-  --repo codex \
+agent-memory memory add-fact \
+  --repo claude \
   --task "audit embedded skills" \
   --subject "docker skill" \
   --predicate "positioning" \
