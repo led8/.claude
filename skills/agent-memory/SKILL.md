@@ -1,11 +1,18 @@
 ---
 name: agent-memory
-description: Portable wrapper and workflow for Neo4j Agent Memory in task-scoped coding sessions.
+description: Use this skill as the default memory system for non-trivial work when task continuity or durable repo knowledge matters.
 ---
 
 # Agent Memory
 
 Use this skill for non-trivial coding work when task continuity or durable repo knowledge matters.
+
+Use this practical distinction:
+
+- `trivial`: one-shot work, low risk, no meaningful continuity needed, and no likely durable memory outcome
+- `non-trivial`: repo state matters, prior context may matter, the task spans multiple steps or turns, or durable knowledge may emerge
+
+**As a rule of thumb, most implementation, debugging, review, refactor, migration, CI, deployment, storage, auth, schema, or architecture work in an existing repo is `non-trivial`.**
 
 ## Read First
 
@@ -29,7 +36,7 @@ The wrapper is exposed as `agent-memory` on `PATH`. Install once:
 
 ```bash
 mkdir -p ~/.local/bin
-ln -sf ~/.claude/skills/agent-memory/scripts/agent-memory.sh ~/.local/bin/agent-memory
+ln -sf ~/.codex/skills/agent-memory/scripts/agent-memory.sh ~/.local/bin/agent-memory
 # Ensure ~/.local/bin is on PATH
 ```
 
@@ -72,6 +79,38 @@ The preflight state is sticky for the session. If it fails, do not rerun `doctor
 6. Use `replace-fact` and `replace-preference` when durable entries change.
 7. Use `update-entity`, `alias-entity`, and `merge-entity` for same-identity entity maintenance.
 8. Never inline literal secrets in commands or examples.
+
+At each use, explicitly decide whether to:
+- `recall`
+- `search`
+- `get-context`
+- `write to short-term`
+- `update reasoning`
+- `review a durable memory candidate`
+- or `skip`
+
+**This is a mandatory decision point, not a mandatory memory write.**
+
+Memory use is required in these situations, **conditional on the preflight being green**:
+- at the start of non-trivial work in an existing repo: run the preflight (`agent-memory doctor`), then run startup recall once for the active task if the preflight is green
+- when the user references prior work, earlier sessions, preferences, previous decisions, or known constraints
+- before any durable memory write
+- after a verified outcome that may help future runs
+- at a meaningful stopping point: evaluate whether to update reasoning or persist durable knowledge
+
+Keep responsibilities separate:
+- `.spark_utils/backlog/` and `.spark_utils/todo/` — local planning and execution tracking (see the planning section of this file for details)
+- `agent-memory` short-term — selective task-local continuity
+- `agent-memory` reasoning — concise multi-step trace updates
+- `agent-memory` long-term — durable facts, preferences, and entities
+
+Quality rules:
+- do not store every turn by default
+- do not store backlog items, todo items, raw shell output, or speculative notes
+- search or inspect before durable writes
+- treat long-term memory as review-first
+- never claim memory was recalled, searched, or stored unless the tool actually succeeded
+- if memory retrieval returns nothing, say so and continue
 
 ## Three Memory Layers
 
@@ -155,20 +194,6 @@ At a meaningful stopping point:
 - update reasoning if the trace gained a useful result
 - review durable memory candidates
 - persist only validated durable knowledge
-
-## Availability And Sandbox Policy
-
-Agent behavior when the preflight reports an unreachable socket:
-1. Report the likely cause once: sandbox network policy.
-2. Do not retry `memory ...` commands in a loop.
-3. Do not try to "escalate" by invoking alternative shells or bypass flags.
-4. Continue the task without memory.
-5. Mention the unavailable state only when it changes or when the final response needs that context.
-
-Agent behavior when the wrapper itself is broken (binary, env, or cli):
-1. Report the specific failing field from `doctor` once.
-2. Treat memory as unavailable for the whole session (sticky state).
-3. Do not retry until the user signals a change.
 
 ## Long-Term Candidate Review
 
