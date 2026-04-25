@@ -2,7 +2,7 @@
 
 ## Compiled Dependencies
 - Use Rust and Maturin for compiled Python extensions
-- Prefer Debian-based images for building Rust compiled dependencies
+- Use Alpine-based images (lighter, sufficient for Rust compiled dependencies)
 
 ## Python Project Dockerfile
 Project should have a Dockerfile and a service in docker-compose.yml to run the project.

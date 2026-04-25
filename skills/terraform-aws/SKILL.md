@@ -5,9 +5,7 @@ description: Build, review, and troubleshoot Terraform configurations using the 
 
 # Terraform AWS Provider
 
-Use this skill for Terraform tasks that are specifically about AWS provider behavior or AWS resource patterns.
-
-## Quick Start
+## Provider Baseline
 
 ```hcl
 terraform {
@@ -21,41 +19,19 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Environment = "prod"
+      ManagedBy   = "terraform"
+    }
+  }
 }
 ```
 
-Then use the standard flow:
+## Multi-Region (v6+)
 
-```bash
-terraform init
-terraform fmt -recursive
-terraform validate
-terraform plan -out=tfplan
-terraform apply tfplan
-```
-
-## Workflow Routing
-
-- Auth, profiles, role assumption, and tagging: `references/provider-auth-tags.md`
-- Day-to-day Terraform AWS workflow and imports: `references/workflow.md`
-- AWS-specific failure modes and safety guardrails: `references/aws-safety.md`
-- Provider architecture and lifecycle internals: `references/architecture.md`
-
-## Core Rules
-
-1. Do not hardcode AWS credentials in `.tf` files.
-2. Pin AWS provider versions and review provider upgrades explicitly.
-3. Always review plan output before apply, especially for replacement actions.
-4. Prefer saved plans in automation (`terraform apply tfplan`).
-5. Use `default_tags` for global tags; use resource tags only for overrides.
-6. Use `ignore_changes` narrowly and document why each ignored field is external.
-7. Treat `terraform import` and state operations as controlled migrations, not routine edits.
-
-## Common Patterns
-
-### Multi-region (AWS provider v6+)
-
-Prefer top-level `region` on resources/data sources instead of many aliased providers when possible.
+Prefer top-level `region` on resources/data sources over aliased providers:
 
 ```hcl
 resource "aws_vpc" "west" {
@@ -64,22 +40,37 @@ resource "aws_vpc" "west" {
 }
 ```
 
-### Import in a specific region
+Import in a specific region:
 
 ```bash
 terraform import aws_vpc.test_vpc vpc-a01106c2@eu-west-1
 ```
 
-### Data source + resource composition
+## AWS-Specific Pitfalls
+
+- **IAM propagation delay** — role/policy changes take seconds to propagate; expect transient auth errors after create.
+- **Eventual consistency** — "not found" errors immediately after create are normal for IAM, networking, S3.
+- **Resource replacement** — immutable attribute changes trigger destroy+create; always review plan for `# forces replacement`.
+- **`ignore_changes` drift** — broad ignore masks real drift; scope it narrowly and document why.
+
+## `ignore_tags` for External Controllers
+
+Use when external systems (e.g. Kubernetes) own tag namespaces:
 
 ```hcl
-data "aws_regions" "all" {
-  all_regions = true
+provider "aws" {
+  ignore_tags {
+    key_prefixes = ["kubernetes.io/"]
+  }
 }
 ```
 
-Use data sources for lookup/read; use resources for lifecycle management.
+## Retry for Transient API Errors
 
-## Documentation Sources
-
-- DeepWiki architecture and provider internals: `hashicorp/terraform-provider-aws`
+```hcl
+provider "aws" {
+  region      = "us-east-1"
+  max_retries = 25
+  retry_mode  = "standard"
+}
+```
