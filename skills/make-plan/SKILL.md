@@ -39,6 +39,7 @@ This plan should include the following steps:
 
 - Use a skill when the task clearly matches its purpose.
 - When a skill applies, read it and follow it.
+- The skills are in the `skills/` folder, at the root `$HOME/.claude/skills/`.
 
 **MCP tools provide direct access to external documentation, code samples, and other live resources.**
 
