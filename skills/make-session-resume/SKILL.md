@@ -104,6 +104,16 @@ Keep the summary concise, factual, and easy to scan.
 - Omit trivia, filler, and raw shell logs.
 - Never include secrets, tokens, or environment variable values.
 
+## Storage Requirement
+
+After preparing the session resume, store it on disk.
+
+- Ensure the folder `.spark_utils/sessions_resume/` exists at the repo root.
+- Write the summary to `.spark_utils/sessions_resume/YYYYMMDD_<repo_name>.md`.
+- Use the current date for `YYYYMMDD`.
+- Use the repository directory name for `<repo_name>`.
+- If the file already exists for that day and repo, update it instead of creating a duplicate.
+
 ## Default Output Format
 
 Use this format unless the user asks for another shape:
