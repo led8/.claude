@@ -8,7 +8,7 @@
 !/CLAUDE.md
 !/skills/
 !/skills/**
-!/.spark_utils/
+.spark_utils/
 !/.envrc
 
 # Ignore Python cache artifacts inside tracked trees.

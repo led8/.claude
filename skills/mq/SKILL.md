@@ -141,7 +141,7 @@ mq -F text '.code' file.md
 mq '.h' docs/**/*.md
 
 # H1 from all Pi skills
-mq '.h1' ~/.pi/agent/skills/*/SKILL.md
+mq '.h1' ~/.claude/skills/*/SKILL.md
 
 # Aggregate all code into single array
 mq -A '.code' examples/*.md
@@ -177,11 +177,11 @@ mq -U 'select(.code.lang != "bash")' file.md
 mq -U 'select(or(.h1, .h2))' file.md
 ```
 
-## Practical Pi Agent Patterns
+## Practical Patterns
 
 ```bash
 # Get all section titles (H2) from a skill
-mq '.h2.value' ~/.pi/agent/skills/python/SKILL.md
+mq '.h2.value' ~/.claude/skills/python/SKILL.md
 
 # Get all code examples in a specific language
 mq 'select(.code.lang == "bash") | .code.value' SKILL.md
@@ -200,6 +200,12 @@ mq '.h | select(contains("Docker"))' SKILL.md
 
 # Extract YAML frontmatter
 mq '.yaml' SKILL.md
+```
+
+# List all skill names across the skills folder   
+
+```bash
+mq '.yaml' ~/.claude/skills/*/SKILL.md
 ```
 
 ## Tips
