@@ -10,6 +10,7 @@
 !/skills/**
 .spark_utils/
 !/.envrc
+!/agents/
 
 # Ignore Python cache artifacts inside tracked trees.
 /skills/**/__pycache__/
