@@ -108,6 +108,7 @@ Quality rules:
 - do not store every turn by default
 - do not store backlog items, todo items, raw shell output, or speculative notes
 - search or inspect before durable writes
+- use `get-provenance` to check evidence chains before overwriting existing facts
 - treat long-term memory as review-first
 - never claim memory was recalled, searched, or stored unless the tool actually succeeded
 - if memory retrieval returns nothing, say so and continue
@@ -161,9 +162,16 @@ Operational commands:
 - `replace-preference`
 - `inspect`
 - `search`
+- `get-provenance`
 - `delete`
 
-This layer is curated. In V1 it is review-first, not automatic.
+V2 candidate commands (opt-in):
+- `list-candidates`
+- `accept-candidate`
+- `ignore-candidate`
+- `get-candidate`
+
+This layer is curated. It is review-first, not automatic.
 
 ## Standard Workflow
 
@@ -174,6 +182,12 @@ Run the preflight first (see Step 0), then for the active task:
 ```bash
 agent-memory memory session-id --repo <repo> --task "<task>"
 agent-memory memory recall --repo <repo> --task "<task>" --session-id "<session-id>"
+```
+
+Use `--include-provenance` when you want each fact/preference annotated with its evidence source:
+
+```bash
+agent-memory memory recall --repo <repo> --task "<task>" --session-id "<session-id>" --include-provenance
 ```
 
 Use startup recall as the anchor for non-trivial repo work.
@@ -237,3 +251,35 @@ Practical rule:
 ## Related Reference
 
 - Use [references/examples.md](references/examples.md) for short runnable command patterns.
+
+## Persistent Candidates (Optional)
+
+When a candidate is worth persisting for later review (e.g., at the end of a long session with many candidates), use the `persist_candidate` pattern:
+
+```bash
+# Store a candidate in the graph for later review
+# (This is opt-in — the default in-memory review-first workflow still works)
+agent-memory memory list-candidates --status proposed
+agent-memory memory accept-candidate <candidate-id>
+agent-memory memory ignore-candidate <candidate-id>
+agent-memory memory get-candidate <candidate-id>
+```
+
+Use persistent candidates when:
+- a session produces multiple candidates that can't all be reviewed immediately
+- you want to defer a review decision to the user
+- the candidate confidence is `medium` and you want it visible in later sessions
+
+Do not persist candidates by default. The in-memory review block remains the primary workflow.
+
+## Provenance Inspection
+
+Before overwriting a high-value fact, inspect its evidence chain:
+
+```bash
+agent-memory memory get-provenance fact <fact-uuid>
+agent-memory memory get-provenance preference <preference-uuid>
+```
+
+This returns the traces and messages that originally supported the entry.
+Use it when `replace-fact` might discard well-evidenced knowledge.

@@ -135,3 +135,49 @@ agent-memory memory add-fact \
   --predicate "positioning" \
   --object-value "must remain a policy skill rather than a generic Docker tutorial"
 ```
+
+## 7. Provenance Inspection
+
+Check evidence before overwriting:
+
+```bash
+agent-memory memory get-provenance fact <fact-uuid>
+```
+
+Output includes the traces and messages that supported the fact.
+
+## 8. Persistent Candidate Review
+
+List candidates stored in the graph:
+
+```bash
+agent-memory memory list-candidates --status proposed
+agent-memory memory list-candidates --status proposed --type fact
+```
+
+Accept or ignore after review:
+
+```bash
+agent-memory memory accept-candidate <candidate-uuid>
+agent-memory memory ignore-candidate <candidate-uuid>
+```
+
+Inspect a single candidate:
+
+```bash
+agent-memory memory get-candidate <candidate-uuid>
+```
+
+## 9. Recall With Provenance
+
+Get richer recall output annotated with evidence sources:
+
+```bash
+agent-memory memory recall \
+  --repo claude \
+  --task "audit embedded skills" \
+  --session-id "coding/claude/audit-embedded-skills/run-1" \
+  --include-provenance
+```
+
+Each fact and preference in the output will include `[trace:...]` or `[msg:...]` annotations showing where the knowledge came from.
