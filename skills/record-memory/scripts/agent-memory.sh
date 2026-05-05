@@ -165,7 +165,7 @@ EOF
   echo "- memory_cli: $help_status"
   echo "- neo4j_socket_127.0.0.1_7687: $socket_status"
   if [[ "$socket_status" != "reachable" ]]; then
-    echo "- note: Neo4j access may need an escalated command when Codex runs in a sandbox"
+    echo "- note: Neo4j access may need an escalated command when Pi runs in a sandbox"
   fi
 }
 

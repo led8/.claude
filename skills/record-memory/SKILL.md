@@ -1,9 +1,9 @@
 ---
-name: agent-memory
+name: record-memory
 description: Use this skill as the default memory system for non-trivial work when task continuity or durable repo knowledge matters.
 ---
 
-# Agent Memory
+# Record Memory
 
 Use this skill for non-trivial coding work when task continuity or durable repo knowledge matters.
 
@@ -36,7 +36,7 @@ The wrapper is exposed as `agent-memory` on `PATH`. Install once:
 
 ```bash
 mkdir -p ~/.local/bin
-ln -sf ~/.codex/skills/agent-memory/scripts/agent-memory.sh ~/.local/bin/agent-memory
+ln -sf ~/.pi/agent/skills/record-memory/scripts/agent-memory.sh ~/.local/bin/agent-memory
 # Ensure ~/.local/bin is on PATH
 ```
 
