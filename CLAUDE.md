@@ -4,13 +4,25 @@ You are a coding-assistant agent designed to help the user **implement features*
 
 - ALWAYS ask the user for confirmation before starting to code.
 
+# Task completion
+
+When a task, feature, or bug fix is **done**, perform these steps in order:
+
+1. **Persist memory** — Use the [record-memory](skills/record-memory/) skill to write durable knowledge (see Memory guidelines below).
+2. **Update session resume** — Use the [make-session-resume](skills/make-session-resume/SKILL.md) skill to update `.spark_utils/sessions_resume/`.
+
+Both steps require actually invoking the skill. Skip only if the task was trivial (quick question, one-liner fix with no lasting insight).
+
+> `trivial`: one-shot work, low risk, no meaningful continuity needed, and no likely durable memory outcome. `non-trivial`: repo state matters, prior context may matter, the task spans multiple steps or turns, or durable knowledge may emerge
+
 # Memory guidelines
 
 - The `record-memory` skill is the agent's built-in knowledge persistence layer. Use it proactively but with judgment.
 
 ## On task start (recall)
 
-- When beginning a new task, feature, or bug fix, consider using `record-memory` to **recall**, **search**, or **get-context** for relevant prior knowledge (past decisions, preferences, constraints, related facts).
+- When beginning a new task, feature, or bug fix, **use the `record-memory` skill** to **recall**, **search**, or **get-context** for relevant prior knowledge (past decisions, preferences, constraints, related facts).
+- This means actually invoking the skill — not just mentioning it.
 - Skip this step if the task is trivial, self-contained, or clearly unrelated to prior work.
 
 ## During the task
@@ -25,7 +37,8 @@ You are a coding-assistant agent designed to help the user **implement features*
 
 ## On task end (persist)
 
-- When a task, feature, or bug fix is completed, consider writing to memory what **remains** — not the actions performed, but the lasting knowledge: reasoning, facts, preferences, constraints, patterns discovered.
+- When a task, feature, or bug fix is completed, **use the `record-memory` skill** to write what **remains** — not the actions performed, but the lasting knowledge: reasoning, facts, preferences, constraints, patterns discovered.
+- This means actually invoking the skill — not just annotating in the recap.
 - Categories to consider: `short-term`, `reasoning`, `fact`, `preference`, `constraint`.
 - Skip if nothing new or durable emerged from the task.
 
@@ -45,6 +58,7 @@ Memory:
 [ ] skip reason: trivial task / nothing new / waiting for more context
 ```
 - Use `[x]` for actions taken, `[ ]` for actions skipped (with brief reason). Keep it to one line.
+- **`[x]` means the skill was actually invoked during this conversation** — never mark `[x]` if you only annotated without running the skill.
 
 # General guidelines
 

@@ -34,7 +34,6 @@ This plan should include the following steps:
     - step 5.2 - Once approved, store the plan in the `.spark_utils/backlog/`:
         - step 5.2.1 - create the corresponding `todo` file in `.spark_utils/todo/`.
     - step 5.3 - **Once planned, do not proceed until I explicitly say: "GO" / "approved" / "ok".**
-- STEP 6 - Once the task is done, update the `.spark_utils/sessions_resume/` using [make-session-resume](../make-session-resume/SKILL.md) skill.
 
 **A skill is a reusable instruction, usually defined in `SKILL.md`** (and sometimes supported by `scripts/`, `references/`, or `assets/`).
 
