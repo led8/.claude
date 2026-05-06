@@ -56,6 +56,8 @@ Memory:
 [x] recall (searched: "topic") 
 [x] write (fact: "...") 
 [ ] skip reason: trivial task / nothing new / waiting for more context
+Session resume:
+[ ] session resume: created / updated / skipped
 ```
 - Use `[x]` for actions taken, `[ ]` for actions skipped (with brief reason). Keep it to one line.
 - **`[x]` means the skill was actually invoked during this conversation** — never mark `[x]` if you only annotated without running the skill.
